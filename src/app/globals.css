@@ -1,0 +1,279 @@
+@import "tailwindcss";
+
+@theme {
+  --font-press-start: "Press Start 2P", system-ui;
+}
+
+:root {
+  --win95-bg: #c0c0c0;
+  --win95-blue: #000080;
+  --win95-text: #000000;
+  --win95-gray: #808080;
+  --cursor-auto: url('https://win98icons.alexmeub.com/cursors/arrow.cur'), auto;
+  --cursor-pointer: url('https://win98icons.alexmeub.com/cursors/pointer.cur'), pointer;
+  --cursor-text: url('https://win98icons.alexmeub.com/cursors/ibeam.cur'), text;
+}
+
+* {
+  box-sizing: border-box;
+  cursor: var(--cursor-auto) !important;
+}
+
+a, button, [role="button"], .cursor-pointer {
+  cursor: var(--cursor-pointer) !important;
+}
+
+input[type="text"], input[type="email"], input[type="password"], textarea {
+  cursor: var(--cursor-text) !important;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  font-family: "MS Sans Serif", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  -webkit-font-smoothing: none;
+  background-color: var(--win95-bg-color, #008080);
+  transition: background-color 0.5s ease;
+}
+
+.wallpaper-preview-teal { background-color: #008080; }
+.wallpaper-preview-night { background-color: #0f1024; }
+.wallpaper-preview-clouds { background-color: #3b82f6; }
+.wallpaper-preview-circuit { background-color: #1a1a1a; }
+.wallpaper-preview-bliss { background-image: url("/wallpapers/bliss.png"); background-size: cover; }
+.wallpaper-preview-vaporwave { background-image: url("/wallpapers/vaporwave.png"); background-size: cover; }
+.wallpaper-preview-cyberpunk { background-image: url("/wallpapers/cyberpunk.png"); background-size: cover; }
+.wallpaper-preview-office { background-image: url("/wallpapers/Office Space Bliss.jpg"); background-size: cover; }
+.wallpaper-preview-spongebob { background-image: url("/wallpapers/spongebob.jpg.webp"); background-size: cover; }
+
+.image-pixelated {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* 98.css overrides for Tailwind interop */
+.fixed\! {
+  position: fixed !important;
+}
+.top-0\! {
+  top: 0 !important;
+}
+.left-0\! {
+  left: 0 !important;
+}
+.w-screen\! {
+  width: 100vw !important;
+}
+.h-\[calc\(100vh-36px\)\]\! {
+  height: calc(100vh - 36px) !important;
+}
+
+/* Dynamic Title Bar Theme Injection */
+.title-bar {
+  background: var(--win95-title-gradient, linear-gradient(90deg, #000080, #1084d0)) !important;
+}
+
+/* Night Campus Background - CSS Silhouette */
+.campus-background {
+  position: fixed;
+  inset: 0;
+  background-color: transparent;
+  z-index: -2;
+}
+
+/* Background Effects */
+.background-effects {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at 70% 20%, #1e1b4b 0%, #0c0b1e 40%, #000 100%);
+  z-index: -2;
+  overflow: hidden;
+}
+
+.pixel-moon {
+  position: absolute;
+  top: 15%;
+  right: 15%;
+  width: 40px;
+  height: 40px;
+  background: #fef08a;
+  border-radius: 50%;
+  box-shadow: 0 0 20px rgba(250, 204, 21, 0.3);
+  z-index: -1;
+}
+
+.pixel-moon::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  right: 10px;
+  width: 40px;
+  height: 40px;
+  background: #1e1b4b; /* Matches sky background color at 20% */
+  border-radius: 50%;
+}
+
+.school-rooftops {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 220px;
+  background: #050505;
+  clip-path: polygon(
+    0% 100%, 0% 90%, 
+    /* Left Wing Gable */
+    5% 90%, 10% 65%, 15% 90%,
+    /* Left Tall Building */
+    20% 90%, 20% 35%, 25% 25%, 30% 35%, 30% 90%,
+    /* Central Hall (Peaked) */
+    35% 90%, 45% 50%, 55% 50%, 65% 90%,
+    /* Right Tall Building */
+    70% 90%, 70% 35%, 75% 25%, 80% 35%, 80% 90%,
+    /* Right Wing Gable */
+    85% 90%, 90% 65%, 95% 90%,
+    100% 90%, 100% 100%
+  );
+  z-index: -1;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.school-rooftops::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(to right, rgba(255,255,255,0.01) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.01) 1px, transparent 1px);
+  background-size: 20px 20px;
+  pointer-events: none;
+}
+
+
+.clock-tower-face {
+  display: none; /* Removed for rooftop view */
+}
+
+.window-light {
+  position: absolute;
+  width: 3px;
+  height: 5px;
+  bottom: var(--bottom);
+  left: var(--left);
+  background: var(--color, #fef08a);
+  box-shadow: 0 0 5px var(--glow, rgba(250, 204, 21, 0.4));
+  opacity: 0.6;
+  z-index: 1;
+}
+
+/* Lighting variants */
+.window-light.warm {
+  --color: #fbbf24;
+  --glow: rgba(251, 191, 36, 0.5);
+}
+
+.window-light.cool {
+  --color: #e0f2fe;
+  --glow: rgba(186, 230, 253, 0.4);
+}
+
+.window-light.standard {
+  --color: #fef08a;
+  --glow: rgba(250, 204, 21, 0.4);
+}
+
+.clock-tower-glow {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+  bottom: 150px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: -2;
+}
+
+.watermark {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: Arial, sans-serif;
+  font-weight: 900;
+  color: #fff;
+  opacity: 0.04;
+  font-size: 10rem;
+  letter-spacing: -4px;
+  pointer-events: none;
+  z-index: 1;
+  text-align: center;
+  user-select: none;
+}
+
+.watermark-sub {
+  font-size: 1rem;
+  margin-top: 0.5rem;
+  opacity: 0.3;
+  letter-spacing: 12px;
+}
+
+/* Win95 Button Overrides for Start Button */
+.start-button {
+  font-weight: bold;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px;
+  padding: 2px 6px !important;
+}
+
+.start-button img {
+  width: 16px;
+  height: 16px;
+}
+
+@layer utilities {
+  .crt-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(
+      rgba(18, 16, 16, 0) 50%,
+      rgba(0, 0, 0, 0.1) 50%
+    ), linear-gradient(
+      90deg,
+      rgba(255, 0, 0, 0.03),
+      rgba(0, 255, 0, 0.01),
+      rgba(0, 0, 255, 0.03)
+    );
+    background-size: 100% 3px, 3px 100%;
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  .bios-text {
+    font-family: var(--font-press-start), monospace;
+    color: #e0e0e0;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+  }
+
+  .scanline-flicker {
+    animation: flicker 0.15s infinite;
+  }
+
+  @keyframes flicker {
+    0% { opacity: 0.97; }
+    5% { opacity: 0.95; }
+    10% { opacity: 0.9; }
+    15% { opacity: 0.98; }
+    30% { opacity: 0.95; }
+    50% { opacity: 0.9; }
+    80% { opacity: 0.99; }
+    100% { opacity: 0.95; }
+  }
+}
