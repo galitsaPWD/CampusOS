@@ -90,7 +90,7 @@ export default function Summarizer() {
       }
     } catch (err: any) {
       console.error(err);
-      setError("Failed to connect to the server. Please check your connection.");
+      setError(err.message || "Failed to connect to the server. Please check your connection.");
       setStatus("error");
     }
   };

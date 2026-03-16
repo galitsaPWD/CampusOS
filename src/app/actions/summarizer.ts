@@ -89,15 +89,19 @@ export async function summarizePdf(formData: FormData) {
 
     const buffer = await file.arrayBuffer();
     
-    // PDF Parsing
-    const path = await import("path");
-    const { pathToFileURL } = await import("url");
-    const workerPath = path.join(process.cwd(), "node_modules", "pdfjs-dist", "legacy", "build", "pdf.worker.mjs");
-    PDFParse.setWorker(pathToFileURL(workerPath).toString());
-    
-    const parser = new PDFParse({ data: new Uint8Array(buffer) });
-    const pdfData = await parser.getText();
-    const rawText = pdfData.text || "";
+    // PDF Parsing - Using more robust implementation for Serverless environments
+    console.log("Parsing PDF context...");
+    let rawText = "";
+    try {
+      // @ts-ignore - The types for pdf-parse are often slightly off-sync with latest ESM versions
+      const parser = new PDFParse(new Uint8Array(buffer));
+      const textResult = await parser.getText();
+      rawText = typeof textResult === 'string' ? textResult : (textResult as any).text || "";
+    } catch (parseError: any) {
+      console.error("PDF Parsing failed:", parseError);
+      return { error: `Extraction Failed: ${parseError.message || "Invalid PDF format"}` };
+    }
+
     const wordCount = rawText.trim().split(/\s+/).length;
 
     // 1. DEDUPLICATION (The "Memory" logic)
