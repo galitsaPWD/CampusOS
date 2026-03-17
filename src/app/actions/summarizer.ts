@@ -7,8 +7,15 @@ import { createClient } from "@/utils/supabase/server";
 import { createHash } from "crypto";
 
 // Initialize AI Providers
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
-const hf = new HfInference(process.env.HF_TOKEN || "");
+const getGenAI = () => {
+  if (!process.env.GEMINI_API_KEY) return null;
+  return new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+};
+
+const getHF = () => {
+  if (!process.env.HF_TOKEN) return null;
+  return new HfInference(process.env.HF_TOKEN);
+};
 
 // MOCK FALLBACK DATA (For when all else fails)
 const getMockResults = (subject: string) => ({
@@ -45,7 +52,8 @@ const getMockResults = (subject: string) => ({
 
 async function summarizeWithHF(text: string) {
   console.log("Attempting Hugging Face Fallback...");
-  if (!process.env.HF_TOKEN) throw new Error("HF_TOKEN missing");
+  const hfClient = getHF();
+  if (!hfClient) throw new Error("HF_TOKEN is not configured.");
 
   const prompt = `<s>[INST] Role: Expert Academic Tutor. 
   Task: Create a highly specific study summary as valid JSON.
@@ -63,7 +71,7 @@ async function summarizeWithHF(text: string) {
   
   Text: ${text.substring(0, 5000)} [/INST]`;
   
-  const response = await hf.textGeneration({
+  const response = await hfClient.textGeneration({
     model: "mistralai/Mistral-7B-Instruct-v0.2",
     inputs: prompt,
     parameters: { max_new_tokens: 1000, return_full_text: false }
@@ -141,7 +149,10 @@ export async function summarizePdf(formData: FormData) {
 
     try {
       // PRIMARY: Gemini 2.0 Flash Lite
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
+      const genAIClient = getGenAI();
+      if (!genAIClient) throw new Error("GEMINI_API_KEY is not configured.");
+      
+      const model = genAIClient.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
       
       let processedText = rawText;
       if (wordCount >= 15000) {

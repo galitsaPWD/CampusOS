@@ -1,14 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/utils/supabase/middleware'
-import { createClient } from '@/utils/supabase/server'
 
 export async function middleware(request: NextRequest) {
-  // updateSession returns the response with updated cookies
-  const response = await updateSession(request)
-  
-  // Check auth status using the supabase client
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  // updateSession returns the response with updated cookies and the user
+  const { supabaseResponse, user } = await updateSession(request)
 
   const isLoginPage = request.nextUrl.pathname.startsWith('/login')
   const isAuthCallback = request.nextUrl.pathname.startsWith('/auth')
@@ -21,7 +16,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/desktop', request.url))
   }
 
-  return response
+  return supabaseResponse
 }
 
 export const config = {
