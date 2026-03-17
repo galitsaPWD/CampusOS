@@ -169,8 +169,10 @@ export default function SystemPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
   const [selectedWallpaper, setSelectedWallpaper] = useState<string>("teal");
+  const [selectedLoginWallpaper, setSelectedLoginWallpaper] = useState<string>("/wallpapers/login-bg.gif");
   const [customWallpaperBase64, setCustomWallpaperBase64] = useState<string | null>(null);
-  const [cropperConfig, setCropperConfig] = useState<{ isOpen: boolean; imageUrl: string }>({ isOpen: false, imageUrl: "" });
+  const [customLoginWallpaperBase64, setCustomLoginWallpaperBase64] = useState<string | null>(null);
+  const [cropperConfig, setCropperConfig] = useState<{ isOpen: boolean; imageUrl: string; target: "desktop" | "login" }>({ isOpen: false, imageUrl: "", target: "desktop" });
   const [selectedTheme, setSelectedTheme] = useState<string>("classic");
   const [msgConfig, setMsgConfig] = useState<{ isOpen: boolean; message: string; type: "success" | "error" }>({
     isOpen: false, message: "", type: "success",
@@ -192,6 +194,17 @@ export default function SystemPage() {
         setSelectedWallpaper(wp);
       }
     });
+
+    // Load login wallpaper from localStorage
+    const savedLoginWp = localStorage.getItem("campus_login_wallpaper");
+    if (savedLoginWp) {
+      if (savedLoginWp.startsWith("data:image")) {
+        setCustomLoginWallpaperBase64(savedLoginWp);
+        setSelectedLoginWallpaper("custom");
+      } else {
+        setSelectedLoginWallpaper(savedLoginWp);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -217,6 +230,12 @@ export default function SystemPage() {
     }
     const result = await updateProfile(formData);
     if (result.success) {
+      // Save login wallpaper to localStorage
+      const loginWpToSave = selectedLoginWallpaper === "custom" ? customLoginWallpaperBase64 : selectedLoginWallpaper;
+      if (loginWpToSave) {
+        localStorage.setItem("campus_login_wallpaper", loginWpToSave);
+      }
+
       setMsgConfig({ isOpen: true, message: "System Registry updated. Your personalization settings have been applied.", type: "success" });
       router.refresh();
       await fetchProfile();
@@ -329,14 +348,13 @@ export default function SystemPage() {
                     const file = e.target.files?.[0];
                     if (file) {
                       const reader = new FileReader();
-                      reader.onload = (e) => {
-                        const result = e.target?.result as string;
+                      reader.onload = (re) => {
+                        const result = re.target?.result as string;
                         if (file.type === "image/gif") {
-                          // Bypass cropper for GIFs so we don't destroy the animation
                           setCustomWallpaperBase64(result);
                           setSelectedWallpaper("custom");
                         } else {
-                          setCropperConfig({ isOpen: true, imageUrl: result });
+                          setCropperConfig({ isOpen: true, imageUrl: result, target: "desktop" });
                         }
                       };
                       reader.readAsDataURL(file);
@@ -345,8 +363,6 @@ export default function SystemPage() {
                 />
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-                
-                {/* Custom Wallpaper Option (shows if uploaded) */}
                 {customWallpaperBase64 && (
                   <label
                     style={{ display: "flex", flexDirection: "column", gap: "3px", cursor: "pointer", width: "100%" }}
@@ -375,36 +391,102 @@ export default function SystemPage() {
                 {WALLPAPERS.map((wp) => {
                   const isSelected = selectedWallpaper === wp;
                   return (
-                  <label
-                    key={wp}
-                    style={{ display: "flex", flexDirection: "column", gap: "3px", cursor: "pointer", width: "100%" }}
-                    onClick={() => setSelectedWallpaper(wp)}
-                  >
-                    <input
-                      type="radio"
-                      name="wallpaper"
-                      value={wp}
-                      checked={isSelected}
-                      onChange={() => setSelectedWallpaper(wp)}
-                      style={{ display: "none" }}
-                    />
-                    <div
-                      style={{
-                        width: "100%",
-                        height: "54px",
-                        border: "2px solid",
-                        borderColor: isSelected ? "#000080" : "#808080",
-                        outline: isSelected ? "1px solid #000080" : "none",
-                        cursor: "pointer",
-                        boxSizing: "border-box",
-                        ...WALLPAPER_STYLES[wp],
-                      }}
-                    />
-                    <span style={{ fontSize: "9px", fontWeight: isSelected ? "bold" : "normal", textTransform: "uppercase", textAlign: "center", fontFamily: "inherit", color: isSelected ? "#000080" : "#000" }}>
-                      {wp}
-                    </span>
-                  </label>);
+                    <label
+                      key={wp}
+                      style={{ display: "flex", flexDirection: "column", gap: "3px", cursor: "pointer", width: "100%" }}
+                      onClick={() => setSelectedWallpaper(wp)}
+                    >
+                      <input
+                        type="radio"
+                        name="wallpaper"
+                        value={wp}
+                        checked={isSelected}
+                        onChange={() => setSelectedWallpaper(wp)}
+                        style={{ display: "none" }}
+                      />
+                      <div
+                        style={{
+                          width: "100%",
+                          height: "54px",
+                          border: "2px solid",
+                          borderColor: isSelected ? "#000080" : "#808080",
+                          outline: isSelected ? "1px solid #000080" : "none",
+                          cursor: "pointer",
+                          boxSizing: "border-box",
+                          ...WALLPAPER_STYLES[wp],
+                        }}
+                      />
+                      <span style={{ fontSize: "9px", fontWeight: isSelected ? "bold" : "normal", textTransform: "uppercase", textAlign: "center", fontFamily: "inherit", color: isSelected ? "#000080" : "#000" }}>
+                        {wp}
+                      </span>
+                    </label>);
                 })}
+              </div>
+            </fieldset>
+
+            <fieldset style={S.fieldset}>
+              <legend style={S.legend}>Login Screen Wallpaper</legend>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                <span style={{ fontSize: "11px", fontFamily: "inherit" }}>Select entry background:</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.onchange = (e) => {
+                      const file = (e.target as HTMLInputElement).files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (re) => {
+                          const result = re.target?.result as string;
+                          if (file.type === "image/gif") {
+                            setCustomLoginWallpaperBase64(result);
+                            setSelectedLoginWallpaper("custom");
+                          } else {
+                            setCropperConfig({ isOpen: true, imageUrl: result, target: "login" });
+                          }
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    };
+                    input.click();
+                  }}
+                  style={{
+                    background: "#c0c0c0",
+                    border: "2px solid",
+                    borderColor: "#ffffff #808080 #808080 #ffffff",
+                    padding: "2px 6px",
+                    fontSize: "10px",
+                    fontFamily: "inherit",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px"
+                  }}
+                >
+                  <Upload size={10} />
+                  Upload Login BG
+                </button>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                {customLoginWallpaperBase64 && (
+                  <label style={{ display: "flex", flexDirection: "column", gap: "3px", cursor: "pointer", width: "100%" }} onClick={() => setSelectedLoginWallpaper("custom")}>
+                    <div style={{ width: "100%", height: "40px", border: "2px solid", borderColor: selectedLoginWallpaper === "custom" ? "#000080" : "#808080", backgroundImage: `url(${customLoginWallpaperBase64})`, backgroundSize: "cover", backgroundPosition: "center" }} />
+                    <span style={{ fontSize: "8px", textAlign: "center", textTransform: "uppercase" }}>CUSTOM</span>
+                  </label>
+                )}
+                {[
+                  { name: "Default (Classroom)", val: "/wallpapers/login-bg.gif" },
+                  { name: "Bliss", val: "/wallpapers/bliss.png" },
+                  { name: "Night", val: "/wallpapers/cyberpunk.png" },
+                  { name: "Office", val: "/wallpapers/Office Space Bliss.jpg" }
+                ].map((wp) => (
+                  <label key={wp.val} style={{ display: "flex", flexDirection: "column", gap: "3px", cursor: "pointer", width: "100%" }} onClick={() => setSelectedLoginWallpaper(wp.val)}>
+                    <div style={{ width: "100%", height: "40px", border: "2px solid", borderColor: selectedLoginWallpaper === wp.val ? "#000080" : "#808080", backgroundImage: `url(${wp.val})`, backgroundSize: "cover", backgroundPosition: "center" }} />
+                    <span style={{ fontSize: "8px", textAlign: "center", textTransform: "uppercase" }}>{wp.name}</span>
+                  </label>
+                ))}
               </div>
             </fieldset>
           </div>
@@ -433,11 +515,16 @@ export default function SystemPage() {
       <ImageCropper
         isOpen={cropperConfig.isOpen}
         imageUrl={cropperConfig.imageUrl}
-        onClose={() => setCropperConfig({ isOpen: false, imageUrl: "" })}
+        onClose={() => setCropperConfig({ ...cropperConfig, isOpen: false })}
         onCropComplete={(croppedBase64) => {
-          setCustomWallpaperBase64(croppedBase64);
-          setSelectedWallpaper("custom");
-          setCropperConfig({ isOpen: false, imageUrl: "" });
+          if (cropperConfig.target === "desktop") {
+            setCustomWallpaperBase64(croppedBase64);
+            setSelectedWallpaper("custom");
+          } else {
+            setCustomLoginWallpaperBase64(croppedBase64);
+            setSelectedLoginWallpaper("custom");
+          }
+          setCropperConfig({ ...cropperConfig, isOpen: false });
         }}
       />
     </div>

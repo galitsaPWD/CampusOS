@@ -2,7 +2,6 @@
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { HfInference } from "@huggingface/inference";
-import { PDFParse } from "pdf-parse";
 import { createClient } from "@/utils/supabase/server";
 import { createHash } from "crypto";
 
@@ -97,14 +96,28 @@ export async function summarizePdf(formData: FormData) {
 
     const buffer = await file.arrayBuffer();
     
-    // PDF Parsing - Using more robust implementation for Serverless environments
+    // PDF Parsing - Using class-based PDFParse API with absolute worker path
     console.log("Parsing PDF context...");
     let rawText = "";
     try {
-      // @ts-ignore - The types for pdf-parse are often slightly off-sync with latest ESM versions
-      const parser = new PDFParse(new Uint8Array(buffer));
+      const { PDFParse } = await import("pdf-parse");
+      
+      // Force absolute worker path to resolve Next.js chunking issues
+      try {
+        const { join } = await import("path");
+        const { pathToFileURL } = await import("url");
+        const workerPath = join(process.cwd(), "node_modules", "pdfjs-dist", "legacy", "build", "pdf.worker.mjs");
+        PDFParse.setWorker(pathToFileURL(workerPath).href);
+      } catch (workerError) {
+        console.warn("Failed to set explicit worker path:", workerError);
+      }
+
+      const parser = new PDFParse({ 
+        data: new Uint8Array(buffer),
+        verbosity: 0 // Suppress logs
+      });
       const textResult = await parser.getText();
-      rawText = typeof textResult === 'string' ? textResult : (textResult as any).text || "";
+      rawText = textResult.text || "";
     } catch (parseError: any) {
       console.error("PDF Parsing failed:", parseError);
       return { error: `Extraction Failed: ${parseError.message || "Invalid PDF format"}` };

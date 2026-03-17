@@ -11,6 +11,14 @@ export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [confirmationRequired, setConfirmationRequired] = useState(false);
+  const [loginWallpaper, setLoginWallpaper] = useState("/wallpapers/login-bg.gif");
+
+  useEffect(() => {
+    const savedWallpaper = localStorage.getItem("campus_login_wallpaper");
+    if (savedWallpaper) {
+      setLoginWallpaper(savedWallpaper);
+    }
+  }, []);
 
   useEffect(() => {
     const lines = [
@@ -110,70 +118,14 @@ export default function LoginPage() {
 
   return (
     <main className="fixed inset-0 flex items-center justify-center p-4 z-50 overflow-hidden text-black">
-      <div className="background-effects">
-        <div className="pixel-moon" />
-        {Array.from({ length: 60 }).map((_, i) => (
-          <div 
-            key={i} 
-            className="pixel-star twinkle"
-            style={{
-              top: `${Math.random() * 80}%`,
-              left: `${Math.random() * 100}%`,
-              '--duration': `${2 + Math.random() * 4}s`,
-              '--delay': `${Math.random() * 5}s`
-            } as any}
-          />
-        ))}
-        <div className="school-rooftops">
-          {/* Windows: Left Tall Building - Room Clusters */}
-          {[
-            { b: 50, l: 23, type: 'warm' }, { b: 50, l: 27, type: 'warm' },
-            { b: 75, l: 23, type: 'cool' }, { b: 75, l: 27, type: 'cool' },
-            { b: 100, l: 25, type: 'standard' },
-          ].map((win, idx) => (
-            Math.random() > 0.3 && (
-              <div 
-                key={`lt-${idx}`} 
-                className={`window-light ${win.type}`} 
-                style={{ '--bottom': `${win.b}px`, '--left': `${win.l}%` } as any} 
-              />
-            )
-          ))}
-
-          {/* Windows: Central Hall - Room Clusters */}
-          {[
-            { b: 65, l: 43, type: 'warm' }, { b: 65, l: 47, type: 'warm' },
-            { b: 65, l: 55, type: 'cool' }, { b: 65, l: 59, type: 'cool' },
-            { b: 85, l: 45, type: 'standard' }, { b: 85, l: 49, type: 'standard' },
-          ].map((win, idx) => (
-            Math.random() > 0.4 && (
-              <div 
-                key={`ch-${idx}`} 
-                className={`window-light ${win.type}`} 
-                style={{ '--bottom': `${win.b}px`, '--left': `${win.l}%` } as any} 
-              />
-            )
-          ))}
-
-          {/* Windows: Right Tall Building - Room Clusters */}
-          {[
-            { b: 50, l: 73, type: 'cool' }, { b: 50, l: 77, type: 'cool' },
-            { b: 80, l: 73, type: 'warm' }, { b: 80, l: 77, type: 'warm' },
-            { b: 110, l: 75, type: 'standard' },
-          ].map((win, idx) => (
-            Math.random() > 0.3 && (
-              <div 
-                key={`rt-${idx}`} 
-                className={`window-light ${win.type}`} 
-                style={{ '--bottom': `${win.b}px`, '--left': `${win.l}%` } as any} 
-              />
-            )
-          ))}
-          
-          {/* Subtle architectural markers using cooler, dimmer lights */}
-          <div className="absolute bottom-[105px] left-[25%] -translate-x-1/2 w-px h-10 bg-white/5" />
-          <div className="absolute bottom-[105px] left-[75%] -translate-x-1/2 w-px h-10 bg-white/5" />
-        </div>
+      {/* Retro GIF Background */}
+      <div className="fixed inset-0 z-[-2] bg-black">
+        <img 
+          src={loginWallpaper} 
+          alt="" 
+          className="w-full h-full object-cover image-pixelated opacity-80"
+        />
+        <div className="absolute inset-0 bg-[#000080]/10" /> {/* Subtle blue tint for cohesiveness */}
       </div>
       
       {/* Simulation of centered Win95 login window */}

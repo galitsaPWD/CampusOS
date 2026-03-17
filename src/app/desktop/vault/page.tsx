@@ -67,7 +67,7 @@ export default function VaultPage() {
           <Clock size={12} /> HISTORY
         </div>
         <div className="text-[10px] px-2 py-1 text-gray-500 italic">
-          {items.length} records found in Vault
+          {items.length} records found in My Documents
         </div>
       </div>
 
@@ -75,7 +75,7 @@ export default function VaultPage() {
         {items.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center opacity-60">
             <Folder size={48} className="text-gray-400 mb-4" />
-            <p className="text-sm font-bold text-gray-700">The Vault is empty.</p>
+            <p className="text-sm font-bold text-gray-700">My Documents is empty.</p>
             <p className="text-[10px] mt-1 uppercase tracking-tighter text-gray-500">Analyze a PDF to create a memory.</p>
           </div>
         ) : (

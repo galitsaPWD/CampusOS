@@ -36,7 +36,7 @@ export default function StartMenu({ isOpen, accountName = "Student", onOpenWindo
         </div>
 
         <div className="flex-1 py-1">
-          <MenuLink icon={<FolderOpen size={16} />} label="My Vault" onClick={() => onOpenWindow('vault')} />
+          <MenuLink icon={<FolderOpen size={16} />} label="My Documents" onClick={() => onOpenWindow('vault')} />
           <MenuLink icon={<Search size={16} />} label="StudyAI Assistant" onClick={() => onOpenWindow('studyai')} />
           <div className="h-[2px] border-t border-gray-400 border-b border-white my-1 mx-1" />
           <MenuLink icon={<Settings size={16} />} label="Settings..." onClick={() => onOpenWindow('system')} />

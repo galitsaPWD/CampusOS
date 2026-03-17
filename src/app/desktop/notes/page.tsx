@@ -66,17 +66,29 @@ export default function NotesApp() {
     });
   };
 
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [tempTitle, setTempTitle] = useState("");
+
+  const startRenaming = (e: React.MouseEvent, id: string, currentTitle: string) => {
+    e.stopPropagation();
+    setRenamingId(id);
+    setTempTitle(currentTitle);
+  };
+
+  const saveRename = () => {
+    if (!renamingId) return;
+    setNotes(prev => prev.map(n => n.id === renamingId ? { ...n, title: tempTitle || "Untitled" } : n));
+    setRenamingId(null);
+  };
+
+  const handleRenameKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") saveRename();
+    if (e.key === "Escape") setRenamingId(null);
+  };
+
   const updateActiveNote = (content: string) => {
     if (!activeNoteId) return;
-    
-    setNotes(prev => prev.map(n => {
-      if (n.id === activeNoteId) {
-        const firstLine = content.split('\n')[0].trim();
-        const title = firstLine || "Untitled Note";
-        return { ...n, content, title: title.slice(0, 40), updatedAt: Date.now() };
-      }
-      return n;
-    }));
+    setNotes(prev => prev.map(n => n.id === activeNoteId ? { ...n, content, updatedAt: Date.now() } : n));
   };
 
   if (!isLoaded) return null;
@@ -108,6 +120,7 @@ export default function NotesApp() {
               <div 
                 key={note.id}
                 onClick={() => setActiveNoteId(note.id)}
+                onDoubleClick={(e) => startRenaming(e, note.id, note.title)}
                 className={`
                   flex items-center gap-1.5 p-1 mb-0.5 cursor-default group border border-transparent
                   ${activeNoteId === note.id ? 'bg-[#000080] text-white' : 'hover:bg-gray-100'}
@@ -117,23 +130,39 @@ export default function NotesApp() {
                   <FileText size={10} className={activeNoteId === note.id ? 'text-white' : 'text-blue-800'} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className={`text-[10px] font-bold truncate leading-none ${activeNoteId === note.id ? 'text-white' : 'text-black'}`}>
-                    {note.title || "Untitled"}
-                  </div>
-                  <div className={`text-[8px] truncate mt-0.5 ${activeNoteId === note.id ? 'text-white/60' : 'text-gray-500'}`}>
-                    {new Date(note.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </div>
+                  {renamingId === note.id ? (
+                    <input
+                      autoFocus
+                      value={tempTitle}
+                      onChange={(e) => setTempTitle(e.target.value)}
+                      onBlur={saveRename}
+                      onKeyDown={handleRenameKeyDown}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-full text-[10px] bg-white text-black border border-blue-500 outline-none px-0.5"
+                    />
+                  ) : (
+                    <>
+                      <div className={`text-[10px] font-bold truncate leading-none ${activeNoteId === note.id ? 'text-white' : 'text-black'}`}>
+                        {note.title || "Untitled"}
+                      </div>
+                      <div className={`text-[8px] truncate mt-0.5 ${activeNoteId === note.id ? 'text-white/60' : 'text-gray-500'}`}>
+                        {new Date(note.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    </>
+                  )}
                 </div>
-                <div 
-                  role="button"
-                  onClick={(e) => deleteNote(e, note.id)}
-                  className={`
-                    opacity-0 group-hover:opacity-100 w-3 h-3 flex items-center justify-center hover:bg-red-600 hover:text-white transition-opacity
-                    ${activeNoteId === note.id ? 'text-white' : 'text-gray-400'}
-                  `}
-                >
-                  <Trash2 size={8} />
-                </div>
+                {renamingId !== note.id && (
+                  <div 
+                    role="button"
+                    onClick={(e) => deleteNote(e, note.id)}
+                    className={`
+                      opacity-0 group-hover:opacity-100 w-3 h-3 flex items-center justify-center hover:bg-red-600 hover:text-white transition-opacity
+                      ${activeNoteId === note.id ? 'text-white' : 'text-gray-400'}
+                    `}
+                  >
+                    <Trash2 size={8} />
+                  </div>
+                )}
               </div>
             ))
           )}
@@ -145,7 +174,12 @@ export default function NotesApp() {
         {activeNote ? (
           <div className="flex flex-col h-full">
             <div className="flex gap-4 px-2 py-0.5 bg-[#c0c0c0] text-[11px] font-sans border-b border-[#808080] select-none flex-shrink-0 shadow-[inset_1px_1px_#dfdfdf]">
-              <div className="hover:bg-[#000080] hover:text-white px-1 cursor-default">File</div>
+              <div 
+                className="hover:bg-[#000080] hover:text-white px-1 cursor-default"
+                onClick={(e) => startRenaming(e as any, activeNote.id, activeNote.title)}
+              >
+                Rename
+              </div>
               <div className="hover:bg-[#000080] hover:text-white px-1 cursor-default">Edit</div>
               <div className="hover:bg-[#000080] hover:text-white px-1 cursor-default">Format</div>
               <div className="hover:bg-[#000080] hover:text-white px-1 cursor-default">Help</div>

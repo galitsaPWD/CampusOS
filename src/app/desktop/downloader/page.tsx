@@ -3,10 +3,15 @@
 import React, { useState } from "react";
 import { Download, CheckCircle2, ChevronRight, Play } from "lucide-react";
 
-export default function GameDownloader({ installApp, uninstallApp }: { installApp: (id: string) => void, uninstallApp: (id: string) => void }) {
+export default function GameDownloader({ installApp, uninstallApp, installedApps = [] }: { 
+  installApp: (id: string) => void, 
+  uninstallApp: (id: string) => void,
+  installedApps?: string[]
+}) {
   const [isInstalling, setIsInstalling] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [isInstalled, setIsInstalled] = useState(false);
+  
+  const isInstalled = installedApps.includes("catgame");
 
   const startInstall = () => {
     setIsInstalling(true);
@@ -18,7 +23,6 @@ export default function GameDownloader({ installApp, uninstallApp }: { installAp
         clearInterval(interval);
         setTimeout(() => {
           installApp("catgame");
-          setIsInstalled(true);
           setIsInstalling(false);
         }, 500);
       }
@@ -28,7 +32,6 @@ export default function GameDownloader({ installApp, uninstallApp }: { installAp
 
   const handleUninstall = () => {
     uninstallApp("catgame");
-    setIsInstalled(false);
     setProgress(0);
   };
 

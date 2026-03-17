@@ -36,16 +36,33 @@ export default function Taskbar({ onOpenWindow, openWindows, onTaskClick, accoun
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    if (!isStartOpen) return;
+    
+    const handleOutsideClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      // If click is not on the start button and not inside the start menu, close it
+      if (!target.closest('.start-button') && !target.closest('.start-menu')) {
+        setIsStartOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [isStartOpen]);
+
   return (
     <>
-      <StartMenu
-        isOpen={isStartOpen}
-        accountName={accountName}
-        onOpenWindow={(id) => {
-          onOpenWindow(id);
-          setIsStartOpen(false);
-        }}
-      />
+      <div className="start-menu" style={{ position: "fixed", bottom: "34px", left: 0, zIndex: 10000 }}>
+        <StartMenu
+          isOpen={isStartOpen}
+          accountName={accountName}
+          onOpenWindow={(id) => {
+            onOpenWindow(id);
+            setIsStartOpen(false);
+          }}
+        />
+      </div>
 
       {/* ── Taskbar Bar ── */}
       <div
@@ -71,6 +88,7 @@ export default function Taskbar({ onOpenWindow, openWindows, onTaskClick, accoun
       >
         {/* START BUTTON */}
         <button
+          className="start-button"
           onClick={() => setIsStartOpen(!isStartOpen)}
           style={{
             height: "26px",
@@ -94,9 +112,9 @@ export default function Taskbar({ onOpenWindow, openWindows, onTaskClick, accoun
           }}
         >
           <img
-            src="/icons/directory_closed-4.png"
+            src="/icons/campusos-logo.png"
             alt=""
-            style={{ width: "16px", height: "16px", imageRendering: "pixelated", filter: "grayscale(0.3) brightness(1.2)" }}
+            style={{ width: "16px", height: "16px", imageRendering: "pixelated" }}
           />
           <span style={{ fontWeight: "bold", fontSize: "11px" }}>Campus</span>
         </button>

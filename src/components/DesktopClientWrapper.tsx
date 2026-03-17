@@ -26,15 +26,15 @@ const APP_REGISTRY: Record<string, {
   height: string;
   locked?: boolean;
 }> = {
-  studyai: { title: "StudyAI", iconUrl: "/icons/notepad-0.png", component: StudyAIApp, width: "650px", height: "550px" },
-  vault: { title: "Vault", iconUrl: "/icons/directory_closed-4.png", component: VaultApp, width: "500px", height: "400px" },
-  system: { title: "System", iconUrl: "/icons/settings_gear-0.png", component: SystemApp, width: "400px", height: "360px" },
-  notes: { title: "Notes", iconUrl: "/icons/note-1.png", component: NotesApp, width: "400px", height: "300px" },
-  justtools: { title: "JustTools", iconUrl: "/icons/computer_explorer-0.png", component: JustToolsApp, width: "760px", height: "540px" },
-  carddeck: { title: "CardDeck", iconUrl: "/icons/game_solitaire-0.png", component: StudyAIApp, width: "500px", height: "400px", locked: true },
-  quizme: { title: "QuizMe", iconUrl: "/icons/help_book_big-0.png", component: StudyAIApp, width: "500px", height: "400px", locked: true },
-  cal: { title: "Cal", iconUrl: "/icons/calendar-0.png", component: StudyAIApp, width: "400px", height: "350px", locked: true },
-  downloader: { title: "Game Downloader", iconUrl: "/icons/computer_explorer-0.png", component: DownloaderApp, width: "450px", height: "350px" },
+  studyai: { title: "StudyAI", iconUrl: "/icons/vintage/help_book_computer_0.png", component: StudyAIApp, width: "650px", height: "550px" },
+  vault: { title: "My Documents", iconUrl: "/icons/vintage/directory_closed_0.png", component: VaultApp, width: "500px", height: "400px" },
+  system: { title: "System", iconUrl: "/icons/vintage/settings_gear_cool_0.png", component: SystemApp, width: "400px", height: "360px" },
+  notes: { title: "Notes", iconUrl: "/icons/vintage/notepad_0.png", component: NotesApp, width: "400px", height: "300px" },
+  justtools: { title: "JustTools", iconUrl: "/icons/vintage/tools_gear_0.png", component: JustToolsApp, width: "760px", height: "540px" },
+  carddeck: { title: "CardDeck", iconUrl: "/icons/vintage/game_solitaire_0.png", component: StudyAIApp, width: "500px", height: "400px", locked: true },
+  quizme: { title: "QuizMe", iconUrl: "/icons/vintage/help_question_mark_0.png", component: StudyAIApp, width: "500px", height: "400px", locked: true },
+  cal: { title: "Cal", iconUrl: "/icons/vintage/calendar_0.png", component: StudyAIApp, width: "400px", height: "350px", locked: true },
+  downloader: { title: "Game Downloader", iconUrl: "/icons/vintage/connected_world_0.png", component: DownloaderApp, width: "450px", height: "350px" },
   catgame: { title: "Normal Cat Game", iconUrl: "/icons/catgame-0.png", component: CatGameApp, width: "450px", height: "380px" },
 };
 
@@ -243,7 +243,7 @@ export default function DesktopClientWrapper({ children: _children, initialProfi
     if (contextMenu.type === "trash-pdf") {
       return [
         {
-          label: "Restore to Vault", onClick: async () => {
+          label: "Restore to My Documents", onClick: async () => {
             if (contextMenu.targetId) {
               try {
                 const { restoreVaultItem } = await import("@/app/actions/vault");
@@ -263,7 +263,7 @@ export default function DesktopClientWrapper({ children: _children, initialProfi
   const taskbarWindows = windows.map(w => {
     let app = APP_REGISTRY[w.id];
     if (w.id === "trash") {
-      app = { title: "Recycle Bin", iconUrl: trashedIcons.length > 0 ? "/icons/recycle_bin_full-2.png" : "/icons/recycle_bin_empty-0.png" } as any;
+      app = { title: "Recycle Bin", iconUrl: (trashedIcons.length > 0 || trashedPdfs.length > 0) ? "/icons/vintage/recycle_bin_full_0.png" : "/icons/vintage/recycle_bin_empty_0.png" } as any;
     }
     return {
       id: w.id,
@@ -343,7 +343,7 @@ export default function DesktopClientWrapper({ children: _children, initialProfi
         <div style={{ width: "75px" }}>
           <DesktopIcon
             label="Recycle Bin"
-            iconUrl={(trashedIcons.length > 0 || trashedPdfs.length > 0) ? "/icons/recycle_bin_full-2.png" : "/icons/recycle_bin_empty-0.png"}
+            iconUrl={(trashedIcons.length > 0 || trashedPdfs.length > 0) ? "/icons/vintage/recycle_bin_full_0.png" : "/icons/vintage/recycle_bin_empty_0.png"}
             onDoubleClick={() => openApp("trash")}
             onContextMenu={(e) => setContextMenu({ x: e.clientX, y: e.clientY, type: "trash" })}
           />
@@ -363,7 +363,7 @@ export default function DesktopClientWrapper({ children: _children, initialProfi
             >
               <RetroWindow
                 title="Recycle Bin"
-                iconUrl={(trashedIcons.length > 0 || trashedPdfs.length > 0) ? "/icons/recycle_bin_full-2.png" : "/icons/recycle_bin_empty-0.png"}
+                iconUrl={(trashedIcons.length > 0 || trashedPdfs.length > 0) ? "/icons/vintage/recycle_bin_full_0.png" : "/icons/vintage/recycle_bin_empty_0.png"}
                 width="400px"
                 height="300px"
                 isMaximized={win.isMaximized}
@@ -394,7 +394,7 @@ export default function DesktopClientWrapper({ children: _children, initialProfi
                         <div key={pdf.id} style={{ width: "75px" }}>
                           <DesktopIcon
                             label={`${pdf.title} (${pdf.subject})`}
-                            iconUrl="/icons/help_book_big-0.png"
+                            iconUrl="/icons/vintage/help_book_big_0.png"
                             onContextMenu={(e) => setContextMenu({ x: e.clientX, y: e.clientY, type: "trash-pdf", targetId: pdf.id })}
                           />
                         </div>
@@ -438,7 +438,7 @@ export default function DesktopClientWrapper({ children: _children, initialProfi
                   <span>Loading...</span>
                 </div>
               }>
-                <AppComponent installApp={installApp} uninstallApp={uninstallApp} />
+                <AppComponent installApp={installApp} uninstallApp={uninstallApp} installedApps={installedApps} />
               </Suspense>
             </RetroWindow>
           </div>
@@ -548,9 +548,14 @@ export default function DesktopClientWrapper({ children: _children, initialProfi
         openWindows={taskbarWindows}
         onTaskClick={(id) => {
           const win = windows.find(w => w.id === id);
-          if (win?.isMinimized) {
+          if (!win) return;
+          
+          const isFocusedAtTop = !win.isMinimized && win.zIndex === topZ;
+
+          if (isFocusedAtTop) {
             minimizeApp(id);
           } else {
+            if (win.isMinimized) minimizeApp(id);
             focusApp(id);
           }
         }}
