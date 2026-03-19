@@ -16,6 +16,8 @@ const JustToolsApp = lazy(() => import("@/app/desktop/justtools/page"));
 const DownloaderApp = lazy(() => import("@/app/desktop/downloader/page"));
 const CatGameApp = lazy(() => import("@/app/desktop/catgame/page"));
 const NotesApp = lazy(() => import("@/app/desktop/notes/page"));
+const CardDeckApp = lazy(() => import("@/app/desktop/carddeck/page"));
+const QuizMeApp = lazy(() => import("@/app/desktop/quizme/page"));
 
 // ── App Registry ─────────────────────────────────────────────────────────────
 const APP_REGISTRY: Record<string, {
@@ -31,8 +33,8 @@ const APP_REGISTRY: Record<string, {
   system: { title: "System", iconUrl: "/icons/vintage/settings_gear_cool_0.png", component: SystemApp, width: "400px", height: "360px" },
   notes: { title: "Notes", iconUrl: "/icons/vintage/notepad_0.png", component: NotesApp, width: "400px", height: "300px" },
   justtools: { title: "JustTools", iconUrl: "/icons/vintage/tools_gear_0.png", component: JustToolsApp, width: "760px", height: "540px" },
-  carddeck: { title: "CardDeck", iconUrl: "/icons/vintage/game_solitaire_0.png", component: StudyAIApp, width: "500px", height: "400px", locked: true },
-  quizme: { title: "QuizMe", iconUrl: "/icons/vintage/help_question_mark_0.png", component: StudyAIApp, width: "500px", height: "400px", locked: true },
+  carddeck: { title: "CardDeck", iconUrl: "/icons/vintage/game_solitaire_0.png", component: CardDeckApp, width: "420px", height: "400px" },
+  quizme: { title: "QuizMe", iconUrl: "/icons/vintage/help_question_mark_0.png", component: QuizMeApp, width: "500px", height: "480px" },
   cal: { title: "Cal", iconUrl: "/icons/vintage/calendar_0.png", component: StudyAIApp, width: "400px", height: "350px", locked: true },
   downloader: { title: "Game Downloader", iconUrl: "/icons/vintage/connected_world_0.png", component: DownloaderApp, width: "450px", height: "350px" },
   catgame: { title: "Normal Cat Game", iconUrl: "/icons/catgame-0.png", component: CatGameApp, width: "450px", height: "380px" },

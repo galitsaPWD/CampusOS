@@ -5,6 +5,61 @@ import { HfInference } from "@huggingface/inference";
 import { createClient } from "@/utils/supabase/server";
 import { createHash } from "crypto";
 
+// ── Upgrade old exam questions to MCQ + True/False format ───────────────────
+export async function upgradeQuizQuestions(resultId: string) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Unauthorized" };
+
+    const { data, error } = await supabase
+      .from("study_ai_results")
+      .select("examQuestions, subject")
+      .eq("id", resultId)
+      .eq("userId", user.id)
+      .single();
+
+    if (error || !data) return { error: "Result not found" };
+
+    // Check if already upgraded
+    const questions = data.examQuestions as any[];
+    if (questions.length > 0 && questions[0].choices) {
+      return { questions }; // Already has choices
+    }
+
+    const genAIClient = getGenAI();
+    if (!genAIClient) return { error: "AI not configured" };
+
+    const model = genAIClient.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
+
+    const prompt = `Given these exam questions about "${data.subject}", add multiple-choice answers to each.
+For each question, add two fields:
+- "choices": array of 4 plausible answer strings for ABCD questions, OR ["True", "False"] for true-false questions
+- "correctAnswer": 0-based index of the correct choice
+- "type": keep original type, but change some to "true-false" if the question is a statement that can be true or false
+
+Return ONLY a valid JSON array of the updated questions. Keep ALL original fields (question, type, probabilityScore, difficulty, hint).
+
+Questions: ${JSON.stringify(questions)}`;
+
+    const result = await model.generateContent(prompt);
+    const jsonText = (await result.response).text().replace(/```json/g, "").replace(/```/g, "").trim();
+    const upgraded = JSON.parse(jsonText);
+
+    // Save back to DB
+    await supabase
+      .from("study_ai_results")
+      .update({ examQuestions: upgraded })
+      .eq("id", resultId)
+      .eq("userId", user.id);
+
+    return { questions: upgraded };
+  } catch (e: any) {
+    console.error("Quiz upgrade failed:", e);
+    return { error: e.message || "Failed to upgrade questions" };
+  }
+}
+
 // Initialize AI Providers
 const getGenAI = () => {
   if (!process.env.GEMINI_API_KEY) return null;
@@ -29,16 +84,16 @@ const getMockResults = (subject: string) => ({
     { term: "Legacy Compatibility", definition: "Support for older systems while implementing modern updates.", whyItMatters: "Common industry challenge often tested in legacy migration scenarios." }
   ],
   examQuestions: [
-    { question: "Define the 'Separation of Concerns' principle and its impact on maintainability.", type: "definition", probabilityScore: 95, difficulty: "easy", hint: "Look at the introduction of modular design." },
-    { question: "Apply the structural optimization framework to a distributed network scenario.", type: "application", probabilityScore: 85, difficulty: "medium", hint: "Consider the latency-throughput trade-offs." },
-    { question: "Compare legacy compatibility with forward-looking design in high-stakes environments.", type: "compare-contrast", probabilityScore: 75, difficulty: "hard", hint: "Think about technical debt and migration costs." },
-    { question: "Scenario: A system displays 20% data corruption after a migration. Troubleshoot using integrity principles.", type: "scenario-based", probabilityScore: 90, difficulty: "hard", hint: "Review the integrity protocol section." },
-    { question: "What are the three tiers of structural optimization discussed in the text?", type: "definition", probabilityScore: 80, difficulty: "medium", hint: "Check page 4 of the lecture notes." },
-    { question: "Demonstrate how systemic integration reduces architectural complexity.", type: "application", probabilityScore: 70, difficulty: "medium", hint: "Focus on component coupling." },
-    { question: "Contrast centralized vs decentralized data integrity models.", type: "compare-contrast", probabilityScore: 65, difficulty: "hard", hint: "Think about single points of failure." },
-    { question: "Scenario: Design a backup strategy for a mission-critical database based on the lecture's principles.", type: "scenario-based", probabilityScore: 88, difficulty: "medium", hint: "Refer to the fault tolerance chapter." },
-    { question: "Define 'Systemic Integration' in the context of modular scaling.", type: "definition", probabilityScore: 82, difficulty: "easy", hint: "Review the closing remarks." },
-    { question: "Apply data integrity rules to a financial transaction log example.", type: "application", probabilityScore: 92, difficulty: "hard", hint: "Consider ACID properties." }
+    { question: "Define the 'Separation of Concerns' principle and its impact on maintainability.", type: "definition", probabilityScore: 95, difficulty: "easy", hint: "Look at the introduction of modular design.", choices: ["Combining all logic into one module for simplicity", "Separating a program into distinct sections each addressing a separate concern", "Using only one programming language per project", "Minimizing the number of files in a codebase"], correctAnswer: 1 },
+    { question: "Structural optimization always increases system latency.", type: "true-false", probabilityScore: 85, difficulty: "medium", hint: "Consider the latency-throughput trade-offs.", choices: ["True", "False"], correctAnswer: 1 },
+    { question: "Compare legacy compatibility with forward-looking design in high-stakes environments.", type: "compare-contrast", probabilityScore: 75, difficulty: "hard", hint: "Think about technical debt and migration costs.", choices: ["Legacy systems are always cheaper to maintain", "Forward-looking design eliminates all technical debt", "Both approaches have trade-offs involving cost, risk, and long-term viability", "Legacy and modern systems cannot coexist"], correctAnswer: 2 },
+    { question: "Data integrity ensures that data remains accurate and consistent throughout its lifecycle.", type: "true-false", probabilityScore: 90, difficulty: "easy", hint: "Review the integrity protocol section.", choices: ["True", "False"], correctAnswer: 0 },
+    { question: "What are the three tiers of structural optimization discussed in the text?", type: "definition", probabilityScore: 80, difficulty: "medium", hint: "Check page 4 of the lecture notes.", choices: ["Speed, Cost, Quality", "Input, Process, Output", "Component, Module, System", "Design, Implementation, Testing"], correctAnswer: 2 },
+    { question: "Systemic integration increases architectural complexity.", type: "true-false", probabilityScore: 70, difficulty: "medium", hint: "Focus on component coupling.", choices: ["True", "False"], correctAnswer: 1 },
+    { question: "Which model is more vulnerable to single points of failure?", type: "compare-contrast", probabilityScore: 65, difficulty: "hard", hint: "Think about single points of failure.", choices: ["Decentralized data integrity model", "Centralized data integrity model", "Both are equally vulnerable", "Neither has single points of failure"], correctAnswer: 1 },
+    { question: "A mission-critical database backup strategy should prioritize fault tolerance.", type: "true-false", probabilityScore: 88, difficulty: "medium", hint: "Refer to the fault tolerance chapter.", choices: ["True", "False"], correctAnswer: 0 },
+    { question: "Define 'Systemic Integration' in the context of modular scaling.", type: "definition", probabilityScore: 82, difficulty: "easy", hint: "Review the closing remarks.", choices: ["Removing all dependencies between modules", "Connecting modular components into a cohesive and scalable whole", "Converting monolithic apps to microservices", "Testing each module independently"], correctAnswer: 1 },
+    { question: "ACID properties are irrelevant to financial transaction logs.", type: "true-false", probabilityScore: 92, difficulty: "hard", hint: "Consider ACID properties.", choices: ["True", "False"], correctAnswer: 1 }
   ],
   keyTerms: [
     { term: "Core Metric", definition: "A primary unit of measurement for system evaluation." },
@@ -62,7 +117,8 @@ async function summarizeWithHF(text: string) {
   2. summary: EXACTLY 3-4 sentences. Mention specific concepts from the text.
   3. keyConcepts: EXACTLY 6-8 items. Each MUST include a content-specific "whyItMatters".
   4. examQuestions: EXACTLY 8-10 questions. 
-     MANDATORY MIX: 3 definition, 3 application, 2 compare-contrast, 2 scenario-based.
+     MANDATORY MIX: 3 definition (ABCD multiple choice), 2 true-false, 2 application (ABCD), 1 compare-contrast (ABCD).
+     Each question MUST have: "choices" (array of 4 strings for ABCD, or ["True","False"] for true-false), "correctAnswer" (0-based index of correct choice).
   5. keyTerms: EXACTLY 5-8 terms a student would see in an exam based on this document.
   6. SHORT DOCUMENT GUARD: If the text is too brief to meet these counts, return {"error": "short_document"}. Do not pad with generic fluff.
   
@@ -184,13 +240,35 @@ export async function summarizePdf(formData: FormData) {
         Role: Expert Academic Tutor
         Task: Create a highly specific study summary as valid JSON.
         STRICT RULES: NO GENERIC ANSWERS. Refer to theories/details from THIS document only.
-        Summary (3-4 sentences), Key Concepts (6-8 items), Exam Questions (10 items: 3def, 3app, 2comp, 2scen), Key Terms (5-8 items).
+        Summary (3-4 sentences), Key Concepts (6-8 items), Key Terms (5-8 items).
+        Exam Questions (10 items): MANDATORY MIX of question types:
+        - 3 definition questions (ABCD multiple choice with 4 choices)
+        - 2 true-false questions (choices: ["True", "False"])
+        - 2 application questions (ABCD multiple choice with 4 choices)
+        - 2 compare-contrast questions (ABCD multiple choice with 4 choices)
+        - 1 scenario-based question (ABCD multiple choice with 4 choices)
+        Each examQuestion MUST have: question, type, probabilityScore (0-100), difficulty (easy/medium/hard), hint, choices (array of strings), correctAnswer (0-based index of correct choice).
         If document is too short (<200 words), return {"error": "short_document"}.
         Text: ${processedText.substring(0, 25000)}
       `;
       const result = await model.generateContent(prompt);
-      const jsonText = (await result.response).text().replace(/```json/g, "").replace(/```/g, "").trim();
-      finalSummary = JSON.parse(jsonText);
+      const rawResponse = (await result.response).text();
+      // Clean up the response - remove markdown fences and trim
+      let jsonText = rawResponse.replace(/```json/g, "").replace(/```/g, "").trim();
+      
+      // Try to extract JSON object if there's extra text
+      const jsonStart = jsonText.indexOf('{');
+      const jsonEnd = jsonText.lastIndexOf('}');
+      if (jsonStart !== -1 && jsonEnd !== -1 && jsonStart < jsonEnd) {
+        jsonText = jsonText.substring(jsonStart, jsonEnd + 1);
+      }
+      
+      try {
+        finalSummary = JSON.parse(jsonText);
+      } catch (parseErr) {
+        console.error("JSON parse failed, raw response:", rawResponse.substring(0, 500));
+        throw new Error("AI returned invalid format. Please try again.");
+      }
       
       if (finalSummary.error === "short_document") {
         return { error: "This document is too short to generate a high-quality study guide. Try a more comprehensive PDF." };
